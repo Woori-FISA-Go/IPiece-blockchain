@@ -1,0 +1,12 @@
+# Foundry build artifacts
+out/
+cache/
+broadcast/
+
+# Foundry dependencies state
+foundry.lock
+
+# Node / JS dependencies
+node_modules/
+package-lock.json
+yarn.lock
