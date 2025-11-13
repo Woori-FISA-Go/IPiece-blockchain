@@ -24,7 +24,7 @@ contract DividendDistributorTest is Test {
         nonInvestor = makeAddr("nonInvestor");
 
         vm.startPrank(deployer);
-        securityToken = new SecurityToken("TestIP", 1000); // 1000 tokens
+        securityToken = new SecurityToken("TestIP", "TIP", 1000, deployer); // 1000 tokens
         krwt = new KRWT();
         distributor = new DividendDistributor(address(securityToken), address(krwt));
         vm.stopPrank();

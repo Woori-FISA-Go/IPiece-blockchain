@@ -28,7 +28,7 @@ contract TokenSaleTest is Test {
 
         vm.startPrank(deployer);
         // Deploy tokens
-        securityToken = new SecurityToken("Sale Token", 100000); // 100,000 tokens total supply
+        securityToken = new SecurityToken("Sale Token", "SLT", 100000, deployer); // 100,000 tokens total supply
         krwt = new KRWT();
 
         // Setup sale times

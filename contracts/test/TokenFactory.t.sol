@@ -13,41 +13,41 @@ contract TokenFactoryTest is Test {
     KRWT public krwt;
 
     address public deployer;
-    address public admin;
     address public user;
 
     function setUp() public {
         deployer = makeAddr("deployer");
-        admin = makeAddr("admin");
         user = makeAddr("user");
 
         vm.startPrank(deployer);
         krwt = new KRWT();
-        factory = new TokenFactory(address(krwt), admin);
+        factory = new TokenFactory(address(krwt));
         vm.stopPrank();
     }
 
     function test_InitialState() public view {
-        assertEq(factory.KRWT_TOKEN(), address(krwt));
-        assertEq(factory.admin(), admin);
+        assertEq(factory.krwtAddress(), address(krwt));
         assertEq(factory.owner(), deployer);
     }
 
-    function test_CreateTokenSet_Success() public {
+    function test_CreateToken_Success() public {
         vm.startPrank(deployer);
         
-        // Expect the event to be emitted
-        vm.expectEmit(false, false, true, true);
-        emit TokenFactory.TokenSetCreated(
-            address(0), // We don't know the address beforehand, so we can't check it precisely here without more complex code
-            address(0),
+        // Emit check now includes the symbol
+        vm.expectEmit(true, true, false, false);
+        emit TokenFactory.TokenCreated(
             "New Awesome IP",
-            1000 * 10**18
+            "NAI",
+            address(0), // This value is now ignored
+            address(0), // This value is now ignored
+            0           // This value is now ignored
         );
 
-        (address newSecurityTokenAddr, address newDistributorAddr) = factory.createTokenSet(
+        (address newSecurityTokenAddr, address newDistributorAddr) = factory.createToken(
             "New Awesome IP",
-            1000 * 10**18
+            "NAI",
+            1000, // Decimals are 0, so no need for * 10**18
+            deployer
         );
         vm.stopPrank();
 
@@ -58,20 +58,26 @@ contract TokenFactoryTest is Test {
         // Check ownership of new contracts
         SecurityToken newSecurityToken = SecurityToken(newSecurityTokenAddr);
         DividendDistributor newDistributor = DividendDistributor(newDistributorAddr);
-        assertEq(newSecurityToken.owner(), admin);
-        assertEq(newDistributor.owner(), admin);
+        assertEq(newSecurityToken.owner(), deployer);
+        assertEq(newDistributor.owner(), address(factory));
+
+        // Check the symbol of the new token
+        assertEq(newSecurityToken.symbol(), "NAI");
 
         // Check if the distributor is linked to the correct tokens
         assertEq(address(newDistributor.securityToken()), newSecurityTokenAddr);
         assertEq(address(newDistributor.krwt()), address(krwt));
 
         // Check if the factory tracks the new token
-        address[] memory allTokens = factory.getAllSecurityTokens();
-        assertEq(allTokens.length, 1);
-        assertEq(allTokens[0], newSecurityTokenAddr);
+        assertEq(factory.getTokenCount(), 1);
+        (string memory name, string memory symbol, address tokenAddr, ,) = factory.tokens(0);
+        assertEq(name, "New Awesome IP");
+        assertEq(symbol, "NAI");
+        assertEq(tokenAddr, newSecurityTokenAddr);
+        assertTrue(factory.tokenExists("New Awesome IP"));
     }
 
-    function test_CreateTokenSet_Reverts_IfNotOwner() public {
+    function test_CreateToken_Reverts_IfNotOwner() public {
         vm.startPrank(user);
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -79,31 +85,16 @@ contract TokenFactoryTest is Test {
                 user
             )
         );
-        factory.createTokenSet("Another IP", 500 * 10**18);
+        factory.createToken("Another IP", "AIP", 500, user);
         vm.stopPrank();
     }
 
-    function test_SetAdmin() public {
-        address newAdmin = makeAddr("newAdmin");
-        
+    function test_CreateToken_Reverts_IfNameExists() public {
         vm.startPrank(deployer);
-        factory.setAdmin(newAdmin);
-        vm.stopPrank();
-
-        assertEq(factory.admin(), newAdmin);
-    }
-
-    function test_SetAdmin_Reverts_IfNotOwner() public {
-        address newAdmin = makeAddr("newAdmin");
-
-        vm.startPrank(user);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Ownable.OwnableUnauthorizedAccount.selector,
-                user
-            )
-        );
-        factory.setAdmin(newAdmin);
+        factory.createToken("Existing IP", "EIP", 1000, deployer);
+        
+        vm.expectRevert("Token already exists");
+        factory.createToken("Existing IP", "EIP2", 2000, deployer);
         vm.stopPrank();
     }
 }
