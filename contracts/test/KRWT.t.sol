@@ -5,15 +5,19 @@ import {Test} from "forge-std/Test.sol";
 import {KRWT} from "../src/KRWT.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+import {ERC20Capped} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
+
 contract KRWTTest is Test {
     KRWT krwt;
     address owner = address(1);
     address user1 = address(2);
     address user2 = address(3);
     
+    uint256 public constant TEST_KRWT_CAP = 1_000_000_000_000_000_000_000_000_000_000_000; // 10^33
+    
     function setUp() public {
         vm.startPrank(owner);
-        krwt = new KRWT();
+        krwt = new KRWT(TEST_KRWT_CAP);
         vm.stopPrank();
     }
     
@@ -22,6 +26,7 @@ contract KRWTTest is Test {
         assertEq(krwt.symbol(), "KRWT", "Token symbol mismatch");
         assertEq(krwt.owner(), owner, "Owner mismatch");
         assertEq(krwt.totalSupply(), 0, "Initial total supply should be 0");
+        assertEq(krwt.cap(), TEST_KRWT_CAP, "Cap mismatch");
     }
     
     function test_Mint() public {
@@ -31,6 +36,15 @@ contract KRWTTest is Test {
 
         assertEq(krwt.balanceOf(user1), 1000 * 10 ** 18, "User1 balance after mint mismatch");
         assertEq(krwt.totalSupply(), 1000 * 10 ** 18, "Total supply after mint mismatch");
+    }
+
+    function test_Mint_RevertsWhen_ExceedsCap() public {
+        vm.startPrank(owner);
+        krwt.mint(user1, TEST_KRWT_CAP); // Mint up to the cap
+        
+        vm.expectRevert(abi.encodeWithSelector(ERC20Capped.ERC20ExceededCap.selector, TEST_KRWT_CAP));
+        krwt.mint(user1, 1); // Try to mint 1 more
+        vm.stopPrank();
     }
 
     function test_RevertWhen_Mint_NotOwner() public {

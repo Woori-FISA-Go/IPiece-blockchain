@@ -42,7 +42,8 @@ contract TokenFactory is Ownable {
         SecurityToken newToken = new SecurityToken(name, symbol, totalSupply, initialOwner);
         DividendDistributor newDividend = new DividendDistributor(
             address(newToken),
-            krwtAddress
+            krwtAddress,
+            initialOwner
         );
         
         tokens.push(IPToken({

@@ -37,18 +37,21 @@ echo ""
 # 변경된 TokenCreated 이벤트 시그니처 해시
 TOKEN_CREATED_EVENT_HASH="0x10ecc469bceb60ca7784b04fd151339af890a3d8b4d90a0313d289f667d4fcd4"
 
-# jq를 사용하여 JSON 결과에서 TokenCreated 이벤트 로그를 찾고, data 필드에서 토큰 주소를 추출합니다.
-# string symbol이 추가되어 data layout이 변경되었으므로, 주소는 두 번째 32-byte word에 위치합니다.
+# jq를 사용하여 JSON 결과에서 TokenCreated 이벤트 로그를 찾고, data 필드에서 주소들을 추출합니다.
+# data layout: [string symbol offset, address tokenAddress, address dividendAddress, ...]
 TOKEN_ADDRESS="0x$(echo "$RECEIPT_JSON" | jq -r ".logs[] | select(.topics[0] == \"$TOKEN_CREATED_EVENT_HASH\") | .data" | cut -c 91-130)"
+DIVIDEND_ADDRESS="0x$(echo "$RECEIPT_JSON" | jq -r ".logs[] | select(.topics[0] == \"$TOKEN_CREATED_EVENT_HASH\") | .data" | cut -c 155-194)"
 
 echo ""
 echo "════════════════════════════════════════"
 echo "🎉 완료!"
 echo "════════════════════════════════════════"
 echo ""
-echo "추출된 토큰 주소: $TOKEN_ADDRESS"
+echo "추출된 주소:"
+echo "  - 토큰 주소:   $TOKEN_ADDRESS"
+echo "  - 배당 주소:   $DIVIDEND_ADDRESS"
 echo ""
-echo "메타마스크 설정:"
+echo "메타마스크 설정 (토큰 가져오기):"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "1. '토큰 가져오기' 클릭"
 echo "2. 주소 입력: $TOKEN_ADDRESS"

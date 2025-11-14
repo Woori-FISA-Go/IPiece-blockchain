@@ -15,12 +15,14 @@ contract TokenFactoryTest is Test {
     address public deployer;
     address public user;
 
+    uint256 public constant TEST_KRWT_CAP = 1_000_000_000_000_000_000_000_000_000_000_000; // 10^33
+
     function setUp() public {
         deployer = makeAddr("deployer");
         user = makeAddr("user");
 
         vm.startPrank(deployer);
-        krwt = new KRWT();
+        krwt = new KRWT(TEST_KRWT_CAP);
         factory = new TokenFactory(address(krwt));
         vm.stopPrank();
     }
@@ -66,7 +68,7 @@ contract TokenFactoryTest is Test {
 
         // Check if the distributor is linked to the correct tokens
         assertEq(address(newDistributor.securityToken()), newSecurityTokenAddr);
-        assertEq(address(newDistributor.krwt()), address(krwt));
+        assertEq(address(newDistributor.krwtToken()), address(krwt));
 
         // Check if the factory tracks the new token
         assertEq(factory.getTokenCount(), 1);

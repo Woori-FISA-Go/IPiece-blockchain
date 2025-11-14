@@ -4,6 +4,8 @@ pragma solidity ^0.8.26;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+import {ERC20Capped} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
+
 /**
  * @title KRW 토큰 (KRWT)
  * @author IPiece 프로젝트
@@ -11,11 +13,19 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  * 모든 토큰 구매 및 배당금 지급에 사용됩니다.
  * @dev 표준 ERC20 기반의 토큰이며, 소유자(Owner)에 의해 발행(mint) 및 소각(burn)이 제어됩니다.
  */
-contract KRWT is ERC20, Ownable {
+contract KRWT is ERC20Capped, Ownable {
     /**
-     * @dev 토큰의 이름, 심볼, 초기 소유자를 설정합니다.
+     * @dev 토큰의 이름, 심볼, 초기 소유자를 설정하고 최대 발행량을 설정합니다.
      */
-    constructor() ERC20("Korean Won Token", "KRWT") Ownable(msg.sender) {}
+    constructor(uint256 cap) ERC20("Korean Won Token", "KRWT") Ownable(msg.sender) ERC20Capped(cap) {}
+
+    /**
+     * @notice ERC20 표준의 decimals() 함수를 오버라이드하여 0을 반환합니다.
+     * @return 0 (소수점 없음)
+     */
+    function decimals() public view virtual override returns (uint8) {
+        return 0;
+    }
 
     /**
      * @notice 지정된 주소에 새로운 KRWT 토큰을 발행합니다.

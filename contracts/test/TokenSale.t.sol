@@ -21,6 +21,8 @@ contract TokenSaleTest is Test {
     uint256 public saleStartTime;
     uint256 public saleEndTime;
 
+    uint256 public constant TEST_KRWT_CAP = 1_000_000_000_000_000_000_000_000_000_000_000; // 10^33
+
     function setUp() public {
         deployer = makeAddr("deployer");
         investor1 = makeAddr("investor1");
@@ -29,7 +31,7 @@ contract TokenSaleTest is Test {
         vm.startPrank(deployer);
         // Deploy tokens
         securityToken = new SecurityToken("Sale Token", "SLT", 100000, deployer); // 100,000 tokens total supply
-        krwt = new KRWT();
+        krwt = new KRWT(TEST_KRWT_CAP);
 
         // Setup sale times
         saleStartTime = block.timestamp + 1 days;
@@ -54,7 +56,7 @@ contract TokenSaleTest is Test {
         krwt.mint(investor2, 100000 * 10**18);
 
         // Transfer SecurityTokens to the sale contract
-        uint256 tokensForSale = (hardCap * (10**18)) / price;
+        uint256 tokensForSale = hardCap / price;
         require(securityToken.transfer(address(sale), tokensForSale), "Token transfer failed");
         vm.stopPrank();
 
@@ -104,8 +106,8 @@ contract TokenSaleTest is Test {
         vm.stopPrank();
 
         // Check balances
-        uint256 tokens1 = (purchase1 * 10**18) / price;
-        uint256 tokens2 = (purchase2 * 10**18) / price;
+        uint256 tokens1 = purchase1 / price;
+        uint256 tokens2 = purchase2 / price;
         assertEq(securityToken.balanceOf(investor1), tokens1);
         assertEq(securityToken.balanceOf(investor2), tokens2);
         assertEq(krwt.balanceOf(deployer), hardCap);
