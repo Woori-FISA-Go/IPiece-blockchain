@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {TokenFactory} from "../src/TokenFactory.sol";
 import {SecurityToken} from "../src/SecurityToken.sol";
 import {KRWT} from "../src/KRWT.sol";
@@ -27,8 +27,8 @@ contract TokenFactoryTest is Test {
         vm.stopPrank();
     }
 
-    function test_InitialState() public {
-        assertEq(factory.krwtToken(), address(krwt));
+    function test_InitialState() public view {
+        assertEq(factory.KRWT_TOKEN(), address(krwt));
         assertEq(factory.admin(), admin);
         assertEq(factory.owner(), deployer);
     }

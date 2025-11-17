@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {TokenSale} from "../src/TokenSale.sol";
 import {SecurityToken} from "../src/SecurityToken.sol";
 import {KRWT} from "../src/KRWT.sol";
@@ -55,7 +55,7 @@ contract TokenSaleTest is Test {
 
         // Transfer SecurityTokens to the sale contract
         uint256 tokensForSale = (hardCap * (10**18)) / price;
-        securityToken.transfer(address(sale), tokensForSale);
+        require(securityToken.transfer(address(sale), tokensForSale), "Token transfer failed");
         vm.stopPrank();
 
         // Whitelist investors

@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import "forge-std/Test.sol";
-import "../src/KRWT.sol";
+import {Test} from "forge-std/Test.sol";
+import {KRWT} from "../src/KRWT.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract KRWTTest is Test {
     KRWT krwt;
@@ -16,7 +17,7 @@ contract KRWTTest is Test {
         vm.stopPrank();
     }
     
-    function test_InitialState() public {
+    function test_InitialState() public view {
         assertEq(krwt.name(), "Korean Won Token", "Token name mismatch");
         assertEq(krwt.symbol(), "KRWT", "Token symbol mismatch");
         assertEq(krwt.owner(), owner, "Owner mismatch");
@@ -66,7 +67,7 @@ contract KRWTTest is Test {
         vm.stopPrank();
 
         vm.startPrank(user1);
-        krwt.transfer(user2, 200 * 10 ** 18);
+        require(krwt.transfer(user2, 200 * 10 ** 18), "KRWT transfer failed");
         vm.stopPrank();
 
         assertEq(krwt.balanceOf(user1), 800 * 10 ** 18, "User1 balance after transfer mismatch");
