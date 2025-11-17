@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {DividendDistributor} from "../src/DividendDistributor.sol";
 import {SecurityToken} from "../src/SecurityToken.sol";
 import {KRWT} from "../src/KRWT.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract DividendDistributorTest is Test {
     DividendDistributor public distributor;
@@ -41,14 +42,19 @@ contract DividendDistributorTest is Test {
 
         // Distribute SecurityTokens to investors
         vm.startPrank(deployer);
-        securityToken.transfer(investor1, 500 * 10 ** 18); // 500 tokens to investor1
-        securityToken.transfer(investor2, 300 * 10 ** 18); // 300 tokens to investor2
+        require(securityToken.transfer(investor1, 500 * 10 ** 18), "Token transfer failed"); // 500 tokens to investor1
+        require(securityToken.transfer(investor2, 300 * 10 ** 18), "Token transfer failed"); // 300 tokens to investor2
         // deployer holds 200 tokens
         vm.stopPrank();
     }
 
     function testOnlyOwnerCanDistribute() public {
-        vm.expectRevert("Not owner");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Ownable.OwnableUnauthorizedAccount.selector,
+                investor1
+            )
+        );
         vm.startPrank(investor1);
         address[] memory investors = new address[](1);
         investors[0] = investor1;
@@ -59,7 +65,7 @@ contract DividendDistributorTest is Test {
     function testDistributeDividendSuccess() public {
         // Transfer KRWT to distributor contract
         vm.startPrank(deployer);
-        krwt.transfer(address(distributor), 1000 * 10 ** 18); // 1000 KRWT for dividend
+        require(krwt.transfer(address(distributor), 1000 * 10 ** 18), "KRWT transfer failed"); // 1000 KRWT for dividend
         vm.stopPrank();
 
         // Prepare investor list
@@ -93,7 +99,7 @@ contract DividendDistributorTest is Test {
     function testDistributeDividendWithZeroBalanceInvestor() public {
         // Transfer KRWT to distributor contract
         vm.startPrank(deployer);
-        krwt.transfer(address(distributor), 1000 * 10 ** 18); // 1000 KRWT for dividend
+        require(krwt.transfer(address(distributor), 1000 * 10 ** 18), "KRWT transfer failed"); // 1000 KRWT for dividend
         vm.stopPrank();
 
         // Prepare investor list including nonInvestor (0 SecurityToken balance)
