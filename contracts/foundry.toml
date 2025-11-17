@@ -1,0 +1,9 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc = "0.8.26"
+
+[rpc_endpoints]
+besu_rpc1 = "http://172.16.4.65:8545"
+besu_vip = "http://172.16.4.60:8545"
