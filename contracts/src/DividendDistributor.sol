@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./SecurityToken.sol";
 import "./KRWT.sol";
 
-contract DividendDistributor {
+contract DividendDistributor is Ownable {
     SecurityToken public securityToken;
     KRWT public krwt;
-    address public owner;
     
     struct Dividend {
         uint256 totalAmount;
@@ -24,17 +24,15 @@ contract DividendDistributor {
         uint256 amount
     );
     
-    constructor(address _securityToken, address _krwt) {
+    constructor(address _securityToken, address _krwt) Ownable(msg.sender) {
         securityToken = SecurityToken(_securityToken);
         krwt = KRWT(_krwt);
-        owner = msg.sender;
     }
     
     /**
      * 배당 실행 (Push 방식 - 자동!)
      */
-    function distributeDividend(address[] calldata investors) external {
-        require(msg.sender == owner, "Not owner");
+    function distributeDividend(address[] calldata investors) external onlyOwner {
         require(investors.length > 0, "No investors");
         
         uint256 totalSupply = securityToken.totalSupply();

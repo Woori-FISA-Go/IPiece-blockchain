@@ -5,6 +5,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {DividendDistributor} from "../src/DividendDistributor.sol";
 import {SecurityToken} from "../src/SecurityToken.sol";
 import {KRWT} from "../src/KRWT.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract DividendDistributorTest is Test {
     DividendDistributor public distributor;
@@ -48,7 +49,12 @@ contract DividendDistributorTest is Test {
     }
 
     function testOnlyOwnerCanDistribute() public {
-        vm.expectRevert("Not owner");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Ownable.OwnableUnauthorizedAccount.selector,
+                investor1
+            )
+        );
         vm.startPrank(investor1);
         address[] memory investors = new address[](1);
         investors[0] = investor1;
