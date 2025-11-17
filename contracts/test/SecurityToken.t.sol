@@ -13,7 +13,7 @@ contract SecurityTokenTest is Test {
     
     function setUp() public {
         vm.startPrank(owner);
-        token = new SecurityToken("RunningMan-IP", 1000000);
+        token = new SecurityToken("RunningMan-IP", "RMI", 1000000, owner);
         vm.stopPrank();
     }
     

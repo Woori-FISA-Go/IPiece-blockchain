@@ -11,39 +11,66 @@ import {TokenFactory} from "../src/TokenFactory.sol";
  *      used to configure the backend application.
  *
  * To run this script:
- * forge script script/Deploy.s.sol:DeployScript --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
+ * ADMIN_ADDRESS=0x... forge script script/Deploy.s.sol:DeployScript \
+ *   --rpc-url http://172.16.4.60:8545 \
+ *   --private-key 0x... \
+ *   --broadcast --legacy
  */
 contract DeployScript is Script {
+    // 1000조 KRWT (10^15 KRWT * 10^18 decimals = 10^33 wei)
+    uint256 public constant KRWT_CAP = 1_000_000_000_000_000_000_000_000_000_000_000; // 10^33
+
     function run() external {
-        // === Configuration ===
-        // IMPORTANT: Replace this with the actual admin address that will own the contracts.
-        // This should ideally be a secure multi-sig wallet address.
+        // 환경 변수에서 관리자 주소 가져오기
         address adminAddress = vm.envAddress("ADMIN_ADDRESS");
+        
+        // Fallback: 환경 변수 없으면 배포자 사용
         if (adminAddress == address(0)) {
-            adminAddress = msg.sender; // Fallback to deployer if not set
+            console.log("WARNING: ADMIN_ADDRESS not set, using deployer");
+            adminAddress = msg.sender;
         }
-
-        // === Deployment ===
+        
         vm.startBroadcast();
-
-        console.log("Deploying KRWT contract...");
-        KRWT krwt = new KRWT();
-        console.log("KRWT contract deployed at:", address(krwt));
-
-        console.log("Deploying TokenFactory contract...");
-        TokenFactory factory = new TokenFactory(address(krwt), adminAddress);
-        console.log("TokenFactory contract deployed at:", address(factory));
+        
+        console.log("=== IPiece Smart Contract Deployment ===");
+        console.log("Deployer:", msg.sender);
+        console.log("Admin:   ", adminAddress);
+        console.log("");
+        
+        // 1. KRWT 배포
+        console.log("1. Deploying KRWT...");
+        KRWT krwt = new KRWT(KRWT_CAP);
+        console.log("   Address:", address(krwt));
+        
+        // 소유권 이전
+        krwt.transferOwnership(adminAddress);
+        console.log("   Owner transferred to admin");
+        console.log("");
+        
+        // 2. TokenFactory 배포 (수정: 1개 파라미터만!)
+        console.log("2. Deploying TokenFactory...");
+        TokenFactory factory = new TokenFactory(address(krwt));
+        console.log("   Address:", address(factory));
+        
+        // 소유권 이전 (추가!)
+        factory.transferOwnership(adminAddress);
+        console.log("   Owner transferred to admin");
+        console.log("");
         
         vm.stopBroadcast();
-
-        // === Post-Deployment Information ===
-        console.log("\n--- Deployment Summary ---");
-        console.log("Platform Admin Address:", adminAddress);
-        console.log("KRWT Contract Address:", address(krwt));
-        console.log("TokenFactory Contract Address:", address(factory));
-        console.log("\nConfiguration for backend application:");
-        console.log("KRWT_CONTRACT_ADDRESS=%s", address(krwt));
-        console.log("TOKEN_FACTORY_CONTRACT_ADDRESS=%s", address(factory));
-        console.log("--------------------------\n");
+        
+        // === Post-Deployment Summary ===
+        console.log("=== Deployment Complete! ===");
+        console.log("");
+        console.log("Deployed Contracts:");
+        console.log("  KRWT:         ", address(krwt));
+        console.log("  TokenFactory: ", address(factory));
+        console.log("");
+        console.log("Owner:           ", adminAddress);
+        console.log("");
+        console.log("Backend Configuration:");
+        console.log("  KRWT_CONTRACT_ADDRESS=%s", address(krwt));
+        console.log("  TOKEN_FACTORY_CONTRACT_ADDRESS=%s", address(factory));
+        console.log("");
     }
 }
