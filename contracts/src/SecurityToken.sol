@@ -92,4 +92,14 @@ contract SecurityToken is ERC20, Ownable {
         require(whitelist[to], "Recipient not whitelisted");
         return super.transferFrom(from, to, amount);
     }
+        /**
+     * @notice 관리자(owner)가 강제로 토큰을 이동시키는 함수
+     * @dev from, to 모두 whitelist 안에 있어야 정상적으로 사용 가능 (규제 준수)
+     */
+    function forceTransfer(address from, address to, uint256 amount) external onlyOwner {
+        require(whitelist[from], "Not whitelisted");
+        require(whitelist[to], "Recipient not whitelisted");
+        // OpenZeppelin 5.x ERC20 내부 로직 사용 (balance & totalSupply 일관성 유지)
+        _update(from, to, amount);
+    }
 }

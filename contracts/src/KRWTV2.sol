@@ -13,7 +13,7 @@ import {ERC20Capped} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20C
  * 모든 토큰 구매 및 배당금 지급에 사용됩니다.
  * @dev 표준 ERC20 기반의 토큰이며, 소유자(Owner)에 의해 발행(mint) 및 소각(burn)이 제어됩니다.
  */
-contract KRWT is ERC20Capped, Ownable {
+contract KRWTV2 is ERC20Capped, Ownable {
     /**
      * @dev 토큰의 이름, 심볼, 초기 소유자를 설정하고 최대 발행량을 설정합니다.
      */
