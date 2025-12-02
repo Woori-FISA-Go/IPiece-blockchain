@@ -1,193 +1,95 @@
-# IPiece 블록체인 스마트 컨트랙트
+# IPiece Blockchain
 
-## 🚀 프로젝트 개요
+캐릭터 IP 기반 STO(Security Token Offering) 플랫폼 **IPiece**의 온체인 영역 레포
 
-IPiece는 지적 재산(IP) 권리를 토큰화하는 STO(Security Token Offering) 플랫폼입니다. 이 저장소는 플랫폼의 핵심 스마트 컨트랙트들을 포함하고 있습니다.
+- 온프레미스 **Hyperledger Besu IBFT2** 네트워크
+- **Spring Boot 백엔드 및 RDS(PostgreSQL)** 와 연동
+- **스마트 컨트랙트** 빌드/테스트/배포 스크립트
 
-**아키텍처:**
-*   **프론트엔드/백엔드:** AWS 클라우드 (Spring Boot, PostgreSQL, Kafka)
-*   **블록체인:** 온프레미스 Hyperledger Besu 프라이빗 네트워크 (IBFT2 합의)
-*   **트랜잭션 처리:** AWS와 Besu 간 Kafka를 통한 비동기 통신
+---
 
-## 📦 주요 스마트 컨트랙트
+## 문서 구조
 
-| 컨트랙트 이름        | 설명                                                                                                                                                                                                                                                                                                   |
-| :------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `KRWT.sol`           | IPiece 생태계의 기축 통화로 사용되는 원화(KRW) 페그(peg) 스테이블 코인입니다. (0 소수점)                                                                                                                                                                                                                            |
-| `SecurityToken.sol`  | IP에 대한 지분을 나타내는 증권형 토큰입니다. 모든 거래는 화이트리스트에 등록된 참여자에게만 허용됩니다. (0 소수점)                                                                                                                                                                                                  |
-| `DividendDistributor.sol` | `SecurityToken` 보유자들에게 `KRWT`로 배당금을 분배하는 컨트랙트입니다. Push 방식을 사용하며, `TokenFactory`에 의해 생성됩니다.                                                                                                                                                                                  |
-| `TokenFactory.sol`   | 새로운 IP 상품(즉, `SecurityToken`과 `DividendDistributor` 컨트랙트 세트)을 생성하는 팩토리 컨트랙트입니다. 컨트랙트 생성 및 소유권 지정을 자동화합니다.                                                                                                                                                        |
-| `TokenSale.sol`      | 새로 발행된 `SecurityToken`을 `KRWT`와 교환하여 판매하는 컨트랙트입니다. Soft/Hard Cap, KYC 화이트리스트 기반의 토큰 판매 로직을 포함합니다.                                                                                                                                                               |
+- [01. 기획](docs/01-planning.md)
+- [02. 인프라](docs/02-server-besu.md)
+- [03. 스마트 컨트랙트](docs/03-contracts.md)
+- [04. 백엔드 연동](docs/04-backend-integration.md)
 
-## 🛠️ 개발 환경 설정
+---
 
-### 전제 조건
+## 문서별 개요
 
-*   **Foundry:** 스마트 컨트랙트 개발, 테스트, 배포 프레임워크 ([설치 가이드](https://book.getfoundry.sh/getting-started/installation))
-*   **`jq`:** `deploy.sh` 스크립트에서 JSON 파싱을 위해 사용됩니다. ([설치 가이드](https://jqlang.github.io/jq/download/))
+### 01. 기획
 
-### 프로젝트 초기화
+- 블록체인 기술스택
+- IPiece 서비스 전체 중에서 **온체인(블록체인)의 역할** 
+- 온체인과 오프체인 하이브리드 구조
+- **체인에 기록** 하는 데이터와 **DB에서 관리**하는 데이터 비교
+- 공모, 배당, 2차 거래 등 주요 비즈니스 플로우에서
+  - 온체인이 “최종 원장”으로 어떻게 작동하는지 설명
 
-1.  저장소를 클론합니다:
-    ```bash
-    git clone https://github.com/Woori-FISA-Go/IPiece-blockchain.git
-    cd IPiece-blockchain
-    ```
-2.  Foundry 의존성을 설치합니다:
-    ```bash
-    forge install --root contracts
-    ```
-3.  Foundry 프로젝트를 빌드합니다:
-    ```bash
-    forge build --root contracts
-    ```
+### 02. 인프라
 
-## 🧪 테스트
+- vSphere 기반 온프레미스 환경에 블록체인 노드(Validator / RPC)를 구성해 프라이빗 블록체인 네트워크 인프라를 구축
+  - 4 Validator, 2 RPC(이중화), 1 배포서버
+- 인프라 구축 과정
+- 블록체인 운영 방법
+  - 클라이언트 기동방식
+  - 점검 가이드(체크리스트)
+- RPC 이중화 방식 및 테스트
+- 트러블슈팅
 
-모든 컨트랙트 테스트를 실행하려면 `contracts` 디렉토리에서 다음 명령어를 사용하세요:
+### 03. 스마트 컨트랙트
 
-```bash
-forge test --root contracts
-```
+- 컨트랙트 역할 정의
+  - **KRWT**: 현금 토큰
+  - **SecurityToken**: 종목(증권형 토큰)
+  - **DividendDistributor**: KRWT 기반 배당 분배
+  - **TokenFactory**: 위 토큰들을 일괄 생성하는 팩토리
+- 배포 및 테스트 방법
+- 트러블슈팅
+  
+### 04. 백엔드 연동
 
-## ⚙️ 컨트랙트 배포 (Hyperledger Besu 네트워크)
+- **Spring Boot 백엔드와 Besu의 통신방식**
+  - RPC URL, chainId, gasPrice, legacy 트랜잭션 정책
+- 공모/배당 등 **비즈니스 플로우와 온체인 트랜잭션 연결 구조**
+- 온체인 트랜잭션을 `blockchain_transactions`에 관리하는 규칙
+- 트랜잭션 pending, 이벤트 파싱 실패 등 백엔드 쪽 트러블슈팅 포인트
 
-### 1. `.env` 파일 설정
+---
 
-프로젝트 루트(`~/IPiece-blockchain`)에 `.env` 파일을 생성하고, 배포 스크립트가 사용할 환경 변수들을 설정합니다.
+## 실행 플로우 (전체 흐름)
 
-> **개인키 및 주소 생성:** 메타마스크(MetaMask)를 사용하여 배포자(Deployer) 및 관리자(Admin) 지갑을 생성하고 해당 주소와 개인키를 안전하게 관리하세요.
+1. **인프라**  
+   (자세한 내용: [02. 인프라](docs/02-server-besu.md))
+   - Validator 4대, RPC 2대에 `genesis.json` 배포
+   - 각 노드에서 **Docker로 Besu 실행**
+     - Validator: RPC 비활성화 기본, 필요 시 디버깅용 RPC 모드 사용
+     - RPC: HTTP(8545) / WS(9545) 오픈, host-allowlist/CORS 설정
+   - `RPC1`, `RPC2`에 `keepalived`를 설정해
+     - **RPC VIP**로 서비스 노출
 
-```ini
-# Network
-BESU_RPC_URL=http://<YOUR_BESU_VIP_ADDRESS>:8545 # 예: http://172.16.4.60:8545
-BESU_CHAIN_ID=<YOUR_BESU_CHAIN_ID>               # 예: 20251029
+2. **스마트 컨트랙트 빌드 및 배포**  
+   (자세한 내용: [03. 스마트 컨트랙트](docs/03-contracts.md))
+   - 배포 서버에서 Foundry(Forge) 설치
+   - `contracts/` 디렉터리에서
+     - `forge build`, `forge test` 로 컨트랙트 검증
+     - `forge script` 또는 `final_deploy.sh` 같은 배포 스크립트로
+       - KRWT, TokenFactory, 기본 종목(SecurityToken+DividendDistributor) 등을
+       - Besu 체인에 배포
+   - 배포된 컨트랙트 주소들은 환경변수로 정리
 
-# Deployer (배포 트랜잭션을 발생시킬 계정)
-DEPLOYER_ADDRESS=0x...
-DEPLOYER_PRIVATE_KEY=...
+3. **백엔드 연동**  
+   (자세한 내용: [04. 백엔드 연동](docs/04-backend-integration.md))
+   - Spring Boot 백엔드에 rpc-url, chain-id, 가스비용 설정
+   - 백엔드가
+     - 공모 상품 등록 시 → TokenFactory 호출 → `blockchain_tokens` 갱신
+     - 공모 청약 시 → holdings/잔고 업데이트 + 온체인 transfer
+     - 배당 시 → holdings 기준 계산 + 온체인 KRWT 전송
+   - 온체인 트랜잭션을 `blockchain_transactions` 테이블에서 관리
 
-# Admin (배포된 컨트랙트들의 최종 소유자가 될 계정)
-ADMIN_ADDRESS=0x...
-ADMIN_PRIVATE_KEY=...
-```
-
-### 2. 배포 스크립트 실행
-
-`.env` 파일 작성을 완료한 후, 프로젝트 루트에서 다음 배포 스크립트를 실행합니다.
-
-```bash
-./final_deploy.sh
-```
-
-성공적으로 배포되면, 새로운 컨트랙트 주소들이 터미널에 출력됩니다. 이 주소들을 `.env` 파일에 업데이트해야 합니다.
-
-## CLI 관리 도구
-
-프로젝트 루트에는 컨트랙트를 쉽게 관리할 수 있는 통합 관리 스크립트 `token_manager.sh`가 포함되어 있습니다. 모든 기능은 이 스크립트를 통해 메뉴 방식으로 편리하게 사용할 수 있습니다.
-
-```bash
-./token_manager.sh
-```
-
-### 메뉴 구조
-
-```
---- 토큰 관리 ---
-1. 모든 토큰 목록 보기: 현재까지 생성된 모든 토큰의 목록과 요약 정보를 봅니다.
-2. 새 토큰 생성: 새로운 Security Token (과 배당 컨트랙트)을 생성합니다.
-3. 토큰 상세 정보: 특정 토큰의 상세 정보를 조회합니다.
-4. 토큰 전송: Admin 계정에서 다른 주소로 특정 토큰을 전송합니다.
-5. 화이트리스트 추가: 특정 토큰의 화이트리스트에 새로운 주소를 추가합니다.
-
---- 배당 관리 ---
-6. 배당 가이드 보기: 발행량에 따른 권장 배당금을 확인하는 가이드를 봅니다.
-7. 배당 사전 시뮬레이션: 배당 실행 전, 조건 충족 여부를 미리 검증합니다.
-8. 배당 실행: 특정 토큰 보유자들에게 KRWT로 배당을 분배합니다.
-9. 배당 결과 확인: 배당 실행 후, 투자자와 Admin의 KRWT 잔고를 확인합니다.
-
---- 시스템 관리 ---
-10. Admin 잔고 확인: Admin 계정의 ETH 및 KRWT 잔고를 확인합니다.
-11. KRWT 발행 (테스트용): Admin 계정으로 테스트용 KRWT를 발행합니다.
-12. 🔄 전체 시스템 리셋 및 재배포: 모든 캐시를 지우고 컨트랙트를 새로 배포합니다.
-0. 종료
-```
-
-## 🔗 백엔드 연동
-
-백엔드 애플리케이션과의 연동을 위한 상세 가이드는 `BACKEND_INTEGRATION.md` 파일을 참조하세요. 이 파일에는 Web3j 설정, 개인키 관리, 이벤트 구독 및 함수 호출 방법 등이 포함됩니다.
-# 🚀 Besu STO Private Network
-
-캐릭터 IP 기반 STO (Security Token Offering) 거래 플랫폼
-
-## 📊 아키텍처
-
-### Validator 노드 (4개)
-- **172.16.4.67, 68, 69, 70**
-- IBFT2 합의 알고리즘
-- 24GB NVMe Pruning 모드
-- 2초마다 블록 생성
-
-### RPC 노드 (2개 - Archive)
-- **172.16.4.65, 66**
-- 250GB HDD Archive 모드
-- VIP (172.16.4.60)로 Active-Active HA
-- 규제 준수를 위한 완전한 이력 보관
-
-### 배포 서버
-- **172.16.4.64**
-- Genesis 관리
-- Validator 키 백업
-- 배포 스크립트 관리
-
-## 🛠️ 기술 스택
-
-- **Blockchain**: Hyperledger Besu
-- **Consensus**: IBFT2
-- **Network**: Private Network
-- **Storage**: Archive Mode (RPC), Pruning Mode (Validator)
-
-## 📋 시작하기
-
-### 사전 요구사항
-- Ubuntu 24.04 LTS
-- Docker & Docker Compose
-- 250GB+ 스토리지 (RPC 노드)
-
-### 설치
-```bash
-git clone https://github.com/Woori-FISA-Go/IPiece-blockchain.git
-cd IPiece-blockchain
-```
-
-### 배포
-```bash
-cd scripts
-./deploy_simple_final.sh
-```
-
-### 상태 확인
-```bash
-./scripts/check_network.sh
-```
-
-## 📖 문서
-
-- [설치 가이드](docs/INSTALLATION.md)
-- [운영 가이드](docs/OPERATIONS.md)
-- [API 문서](docs/API.md)
-- [트러블슈팅](docs/TROUBLESHOOTING.md)
-
-## 👥 팀
-
-- **Organization**: IPiece-blockchain
-- **팀 규모**: 5명
-- **프로젝트**: 캐릭터 IP STO 플랫폼
-
-## 📞 문의
-
-GitHub Issues 탭에서 문의해주세요.
-
-## 📄 라이선스
-
-MIT License
+4. **프론트/사용자 관점**
+   - 사용자는 프론트를 통해 **백엔드 API**만 호출
+   - 백엔드가 내부에서 RDS와 블록체인을 적절히 엮어서
+     - 공모 참여, 보유 내역 조회, 배당 내역 조회 등 기능을 제공
