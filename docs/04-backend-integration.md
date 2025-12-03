@@ -445,7 +445,7 @@ IPiece 백엔드에서 **Spring Boot + Web3j + BesuClient** 조합으로 Hyperle
 
 ---
 
-### 3.4 공모 참여(투자)와 온체인 토큰 전송
+### 3.4 공모 참여(투자)
 
 #### 3.4.1 공모 투자 요청
 
@@ -458,7 +458,7 @@ IPiece 백엔드에서 **Spring Boot + Web3j + BesuClient** 조합으로 Hyperle
   - `BlockchainTransaction` 엔티티
 
 - 한 줄 요약  
-  → **사용자가 공모에 참여하면, DB에 투자 내역을 먼저 저장하고, 이어서 온체인 토큰 화이트리스트 + 토큰 전송을 수행하는 흐름입니다.**
+  → **사용자가 공모에 참여하면, DB에 투자 내역을 먼저 저장**
 
 - 상세 순서 (단순화 버전)
 
@@ -478,43 +478,8 @@ IPiece 백엔드에서 **Spring Boot + Web3j + BesuClient** 조합으로 Hyperle
    - 상태: `PENDING` 또는 `REQUESTED`
    - `amount`, `tokenAmount`, `user`, `product` 등 저장
 
-4. **화이트리스트 온체인 등록**
-   - `blockchainService.addToWhitelist(tokenContractAddress, whitelistRequest)`
-   - 내부에서
-     - DB의 `BlockchainToken` 조회 (없는 경우 `TokenNotFoundException`)
-     - `besuClient.addToWhitelist(contractAddress, userWalletAddress)`
-     - txHash 로그 기록 (구현에 따라 DB 저장 or Investment 에 기록)
-   - Investment에 `whitelistTxHash` 기록
-
-5. **토큰 전송**
-   - `blockchainService.transferToken(tokenContractAddress, TokenTransferRequest, adminUserId)`
-   - 내부에서
-     - `BlockchainToken` 조회
-     - `adminUserId` 로 관리자 User 조회
-     - `Investment` 조회 (investmentId로)
-     - `besuClient.transferToken(contractAddress, toAddress, amount)` 호출
-       - 관리자 주소 → 사용자 지갑 주소
-       - txHash 반환
-   - `BlockchainTransaction` 생성
-     - `txHash`
-     - `fromAddress = adminAddress`
-     - `toAddress = userWalletAddress`
-     - `tokenAddress = tokenContractAddress`
-     - `amount = tokenAmount`
-     - `transactionType = TRANSFER`
-     - `transactionStatus = PENDING`
-     - `user = adminUser`
-     - `investment = 해당 Investment`
-   - `blockchainTransactionRepository.save(transaction)`
-   - Investment에 `transferTxHash` 저장, 상태 `COMPLETED` 로 변경
-
-6. **사용자 응답**
-   - `InvestmentResponse`
-     - `investmentId`, `projectId`, `userWallet`, `tokenAddress`
-     - `tokenAmount`, `krwtSpent`
-     - `whitelistTxHash`, `transferTxHash`
-
-
+4. 사용자 KRWT 이동
+   - 공모 참여한 액수만큼 KRWT가 사용자 -> 관리자로 이동
 ---
 
 ### 3.5 공모 → 2차거래 전환 (enableSecondaryTrading)
