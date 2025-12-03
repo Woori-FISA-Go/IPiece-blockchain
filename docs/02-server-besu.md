@@ -25,16 +25,15 @@ IPiece 온체인 영역은 vSphere 기반 온프레미스 환경 위에 Hyperled
 
 | 역할                  | 호스트네임 | IP            |
 |-----------------------|-----------|--------------|
-| Validator 1           | `val1`    | 172.16.4.67  |
-| Validator 2           | `val2`    | 172.16.4.68  |
-| Validator 3           | `val3`    | 172.16.4.69  |
-| Validator 4           | `val4`    | 172.16.4.70  |
-| RPC 1                 | `rpc1`    | 172.16.4.65  |
-| RPC 2                 | `rpc2`    | 172.16.4.66  |
-| Tx Gateway            | `txgw`    | 172.16.4.33  |
-| RPC VIP(Active-Standby)| (없음)   | **172.16.4.60** |
+| Validator 1           | `val1`    | 172.16.X.X  |
+| Validator 2           | `val2`    | 172.16.X.X  |
+| Validator 3           | `val3`    | 172.16.X.X  |
+| Validator 4           | `val4`    | 172.16.X.X  |
+| RPC 1                 | `rpc1`    | 172.16.X.X  |
+| RPC 2                 | `rpc2`    | 172.16.X.X  |
+| Tx Gateway            | `txgw`    | 172.16.X.X  |
+| RPC VIP(Active-Standby)| (없음)   | **172.16.X.X** |
 
-> 실제 IP는 사설망이므로 보안상 민감 정보(키, 패스워드) 없이 구조만 공개합니다.
 
 ### 2.2 서버 스펙 및 디렉토리 구조
 
@@ -259,10 +258,10 @@ cd /opt/ibft/networkFiles/keys
 
 cat > /opt/ibft/static-nodes.json <<'JSON'
 [
-  "enode://<PUBKEY_VAL1>@172.16.4.67:30303",
-  "enode://<PUBKEY_VAL2>@172.16.4.68:30303",
-  "enode://<PUBKEY_VAL3>@172.16.4.69:30303",
-  "enode://<PUBKEY_VAL4>@172.16.4.70:30303"
+  "enode://<PUBKEY_VAL1>@172.16.X.X:30303",
+  "enode://<PUBKEY_VAL2>@172.16.X.X:30303",
+  "enode://<PUBKEY_VAL3>@172.16.X.X:30303",
+  "enode://<PUBKEY_VAL4>@172.16.X.X:30303"
 ]
 JSON
 ```
@@ -287,7 +286,7 @@ JSON
 - RPC 노드는 사용자(백엔드) 트랜잭션이 몰리는 구간입니다.
 - 운영 원칙입니다.
   - 외부에서 직접 Validator에 접근하지 않고, **모든 JSON-RPC는 RPC 노드를 통해서만** 접근합니다.
-  - RPC 노드는 **VIP(172.16.4.60)** 로 서비스되며, 실제 물리 IP는 `rpc1`/`rpc2`가 번갈아가며 담당합니다.
+  - RPC 노드는 **VIP(172.16.X.X)** 로 서비스되며, 실제 물리 IP는 `rpc1`/`rpc2`가 번갈아가며 담당합니다.
   - 헬스체크 스크립트로 Besu 상태를 감시하고, 이상 시 자동으로 VIP를 넘깁니다.
 
 ---
@@ -311,7 +310,7 @@ sudo docker run -d --name besu \
   --p2p-port=30303 \
   --rpc-http-enabled=false \
   --rpc-ws-enabled=false \
-  --host-allowlist=* \
+  --host-allowlist= (마스킹) \
   --sync-mode=FULL \
   --min-gas-price=0 \
   --nat-method=NONE \
@@ -338,11 +337,11 @@ sudo docker run -d --name besu \
   --rpc-http-host=0.0.0.0 \
   --rpc-http-port=8545 \
   --rpc-http-api=ADMIN,ETH,NET,WEB3,TXPOOL,DEBUG \
-  --host-allowlist=* \
+  --host-allowlist= (마스킹) \
   --sync-mode=FULL \
   --min-gas-price=0 \
   --nat-method=NONE \
-  --p2p-host=172.16.4.67
+  --p2p-host=172.16.X.X
 ```
 
 - 운영 환경에서는 **내부 관리망에서만 접근 가능하도록** 방화벽(UFW/pfSense)로 제한해야 합니다.
@@ -374,11 +373,11 @@ sudo docker run -d --name besu \
   --rpc-http-api=ADMIN,ETH,NET,WEB3,TXPOOL,DEBUG \
   --rpc-http-max-active-connections=1000 \
   --rpc-http-cors-origins="*" \
-  --host-allowlist=127.0.0.1,172.16.4.33,172.16.4.60,172.16.4.65,172.16.4.66 \
+  --host-allowlist=(마스킹) \
   --sync-mode=FULL \
   --min-gas-price=0 \
   --nat-method=NONE \
-  --p2p-host=172.16.4.65   # rpc1/rpc2 각각 IP로 변경
+  --p2p-host=172.16.X.X   # rpc1/rpc2 각각 IP로 변경
 ```
 
 - `--host-allowlist`에 Tx Gateway, RPC VIP 및 운영자가 접근하는 IP만 넣어둡니다.
@@ -414,10 +413,10 @@ chronyc tracking | sed -n '1,6p'
 
 ### 5.2 RPC VIP 기준 체인 상태 점검
 
-Tx Gateway 또는 관리용 PC에서 **VIP(172.16.4.60:8545)** 를 대상으로 점검합니다.
+Tx Gateway 또는 관리용 PC에서 **VIP(172.16.X.X:XXXX)** 를 대상으로 점검합니다.
 
 ```bash
-URL=http://172.16.4.60:8545
+URL=http://172.16.X.X:XXXX
 H='Content-Type: application/json'
 
 # 1) 체인 ID / 네트워크 ID
@@ -451,7 +450,7 @@ curl -s -X POST "$URL" -H "$H" --data-raw \
 
 ### 6.1 설계 개요
 
-- **VRRP(keepalived)** 를 사용하여 `rpc1`, `rpc2` 사이에서 VIP(172.16.4.60)를 Active-Standby로 운영합니다.
+- **VRRP(keepalived)** 를 사용하여 `rpc1`, `rpc2` 사이에서 VIP(172.16.X.X)를 Active-Standby로 운영합니다.
 - 자체 헬스체크 스크립트(`check_besu.sh`)를 통해 다음 조건을 만족하지 못하면 VIP를 포기합니다.
   - Besu 프로세스 존재
   - 피어 수 ≥ 1
@@ -465,8 +464,8 @@ curl -s -X POST "$URL" -H "$H" --data-raw \
 ```bash
 sudo apt -y install keepalived
 
-echo 'export PEERIP=172.16.4.65' | sudo tee /etc/default/besu-health >/dev/null
-# rpc2 에서는 172.16.4.66 등으로 조정
+echo 'export PEERIP=172.16.X.X' | sudo tee /etc/default/besu-health >/dev/null
+# rpc2 에서는 172.16.X.X 등으로 조정
 
 cat | sudo tee /usr/local/bin/check_besu.sh >/dev/null <<'SH'
 #!/usr/bin/env bash
@@ -580,7 +579,7 @@ CONF
 sudo chown root:root /usr/local/bin/check_besu.sh
 sudo chmod 700 /usr/local/bin/check_besu.sh
 
-sudo ufw allow from 172.16.4.66 comment 'VRRP peer rpc2'
+sudo ufw allow from 172.16.X.X comment 'VRRP peer rpc2'
 sudo systemctl enable --now keepalived
 ```
 
@@ -609,7 +608,7 @@ vrrp_instance VI_1 {
   authentication { auth_type PASS; auth_pass 7b0b7b0b; }
 
   virtual_ipaddress {
-    172.16.4.60/24 dev ens192
+    172.16.X.X/24 dev ens192
   }
 
   # 필요 시 nopreempt 활성화 가능
@@ -629,13 +628,13 @@ CONF
 sudo chown root:root /usr/local/bin/check_besu.sh
 sudo chmod 700 /usr/local/bin/check_besu.sh
 
-sudo ufw allow from 172.16.4.65 comment 'VRRP peer rpc1'
+sudo ufw allow from 172.16.X.X comment 'VRRP peer rpc1'
 sudo systemctl enable --now keepalived
 ```
 
 ### 6.4 페일오버 테스트
 
-1. 정상 상태에서 VIP(172.16.4.60)가 `rpc1`의 인터페이스에 붙어있는지 확인합니다.
+1. 정상 상태에서 VIP(172.16.X.X)가 `rpc1`의 인터페이스에 붙어있는지 확인합니다.
 2. `rpc1`에서 Besu 컨테이너를 중지합니다.
 
    ```bash
@@ -643,7 +642,7 @@ sudo systemctl enable --now keepalived
    ```
 
 3. `rpc2`의 `keepalived` 로그를 확인하면, 헬스체크가 `rpc1` 실패를 감지하고 VIP를 가져오는 메시지가 출력됩니다.
-4. 네트워크에서 `ip addr` 로 확인하면, `rpc2`에 `172.16.4.60` 이 추가된 것을 확인할 수 있습니다.
+4. 네트워크에서 `ip addr` 로 확인하면, `rpc2`에 `172.16.X.X` 이 추가된 것을 확인할 수 있습니다.
 5. 다시 `rpc1`에서 Besu를 정상 기동하면, 우선순위가 더 높은 `rpc1`이 VIP를 회수합니다.
 
 ---
@@ -734,9 +733,9 @@ sudo systemctl enable --now keepalived
 ```bash
 sudo ufw allow 30303/tcp
 sudo ufw allow 30303/udp
-sudo ufw allow from 172.16.4.33 to any port 8545 proto tcp
-sudo ufw allow from 172.16.4.65 comment 'VRRP peer rpc1'
-sudo ufw allow from 172.16.4.66 comment 'VRRP peer rpc2'
+sudo ufw allow from 172.16.X.X to any port 8545 proto tcp
+sudo ufw allow from 172.16.X.X comment 'VRRP peer rpc1'
+sudo ufw allow from 172.16.X.X comment 'VRRP peer rpc2'
 ```
 
 ### 7.5 기타 운영 팁
@@ -746,7 +745,3 @@ sudo ufw allow from 172.16.4.66 comment 'VRRP peer rpc2'
   - 동일한 제네시스 파일로 초기화하고
   - `static-nodes.json`에 추가
   - IBFT Validator 목록 관리(추가/제거)는 별도의 온체인 트랜잭션으로 처리해야 합니다.
-
----
-
-이 문서는 IPiece 블록체인 인프라를 **다시 구축하거나 장애 발생 시 복구**할 때 참고할 수 있는 운영 가이드라인을 목표로 작성되었습니다. 실제 운영 환경에서는 보안 정책(방화벽, 키 관리, 접근제어 등)을 별도 문서로 정리하여 함께 관리하는 것을 전제로 합니다.
